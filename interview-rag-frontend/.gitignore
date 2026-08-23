@@ -1,0 +1,50 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# =========================
+# Node
+# =========================
+node_modules/
+dist/
+build/
+
+# Frontend environment
+*.local
+
+# =========================
+# IDE
+# =========================
+.vscode/
+.idea/
+
+# =========================
+# OS
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Python cache / test
+# =========================
+.pytest_cache/
+.mypy_cache/
+
+# =========================
+# Local databases / generated data
+# =========================
+chroma_db/
+*.db

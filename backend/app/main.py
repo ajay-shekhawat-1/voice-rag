@@ -24,7 +24,7 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:5174",
 
     # Vercel production
-    "https://voice-rag-sigma.vercel.app",
+    "https://voice-r2qz6zqfc-ajay-2382.vercel.app",
 ]
 
 

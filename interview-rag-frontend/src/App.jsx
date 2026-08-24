@@ -1,7 +1,18 @@
 import { useState } from "react";
 import "./App.css";
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+// ============================================================
+// API CONFIGURATION
+// ============================================================
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://voice-rag-2rq5.onrender.com";
+
+
+// ============================================================
+// MAIN APP
+// ============================================================
 
 function App() {
   const [page, setPage] = useState("knowledge");
@@ -76,11 +87,13 @@ function App() {
 
       </aside>
 
+
       <main className="vr-main">
 
         <header className="vr-header">
 
           <div>
+
             <div className="vr-breadcrumb">
               WORKSPACE <span>/</span>{" "}
               {page === "knowledge"
@@ -93,6 +106,7 @@ function App() {
                 ? "Knowledge workspace"
                 : "AI knowledge assistant"}
             </h1>
+
           </div>
 
           <div className="vr-header-status">
@@ -101,6 +115,7 @@ function App() {
           </div>
 
         </header>
+
 
         {page === "knowledge" ? (
           <KnowledgePage />
@@ -115,18 +130,25 @@ function App() {
 }
 
 
-/* =========================================================
-   KNOWLEDGE PAGE
-========================================================= */
+// ============================================================
+// KNOWLEDGE PAGE
+// ============================================================
 
 function KnowledgePage() {
+
   const [file, setFile] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
 
+
+  // ==========================================================
+  // SELECT AUDIO FILE
+  // ==========================================================
+
   const selectFile = (selectedFile) => {
+
     if (!selectedFile) return;
 
     const allowed = [
@@ -158,9 +180,22 @@ function KnowledgePage() {
     setFile(selectedFile);
   };
 
+
+  // ==========================================================
+  // UPLOAD AUDIO
+  // ==========================================================
+
   const uploadFile = async () => {
+
     if (!file) {
       setError("Please select an audio file first.");
+      return;
+    }
+
+    if (!API_BASE_URL) {
+      setError(
+        "API URL is not configured. Please check VITE_API_BASE_URL."
+      );
       return;
     }
 
@@ -169,9 +204,16 @@ function KnowledgePage() {
     setResult(null);
 
     const formData = new FormData();
+
     formData.append("file", file);
 
     try {
+
+      console.log(
+        "Uploading voice to:",
+        `${API_BASE_URL}/api/voice/ingest`
+      );
+
       const response = await fetch(
         `${API_BASE_URL}/api/voice/ingest`,
         {
@@ -180,24 +222,42 @@ function KnowledgePage() {
         }
       );
 
-      const data = await response.json();
+      let data = {};
+
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
 
       if (!response.ok) {
         throw new Error(
-          data.detail || "Failed to process audio."
+          data.detail ||
+          "Failed to process audio."
         );
       }
 
       setResult(data);
+
     } catch (err) {
+
+      console.error(
+        "Voice ingestion error:",
+        err
+      );
+
       setError(
         err.message ||
-          "Unable to connect to the Voice RAG backend."
+        "Unable to connect to the Voice RAG backend."
       );
+
     } finally {
+
       setLoading(false);
+
     }
   };
+
 
   return (
     <div className="vr-page">
@@ -205,6 +265,7 @@ function KnowledgePage() {
       <section className="vr-intro">
 
         <div>
+
           <div className="vr-section-label">
             KNOWLEDGE INGESTION
           </div>
@@ -217,6 +278,7 @@ function KnowledgePage() {
             Upload a voice recording and transform it into
             searchable semantic knowledge.
           </p>
+
         </div>
 
         <div className="vr-engine-pill">
@@ -233,18 +295,32 @@ function KnowledgePage() {
           className={`vr-dropzone ${
             dragging ? "dragging" : ""
           } ${file ? "has-file" : ""}`}
+
           onDragOver={(e) => {
             e.preventDefault();
             setDragging(true);
           }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={(e) => {
-            e.preventDefault();
+
+          onDragLeave={() => {
             setDragging(false);
-            selectFile(e.dataTransfer.files[0]);
           }}
+
+          onDrop={(e) => {
+
+            e.preventDefault();
+
+            setDragging(false);
+
+            selectFile(
+              e.dataTransfer.files[0]
+            );
+
+          }}
+
           onClick={() =>
-            document.getElementById("audio-input").click()
+            document
+              .getElementById("audio-input")
+              .click()
           }
         >
 
@@ -254,11 +330,15 @@ function KnowledgePage() {
             accept=".mp3,.wav,.m4a,.webm,audio/*"
             hidden
             onChange={(e) =>
-              selectFile(e.target.files[0])
+              selectFile(
+                e.target.files[0]
+              )
             }
           />
 
+
           {!file ? (
+
             <>
               <div className="vr-upload-icon">
                 ↑
@@ -273,11 +353,14 @@ function KnowledgePage() {
               </p>
 
               <div className="vr-file-types">
-                MP3 <span>•</span> WAV <span>•</span> M4A
+                MP3 <span>•</span> WAV
+                <span>•</span> M4A
                 <span>•</span> WEBM
               </div>
             </>
+
           ) : (
+
             <div className="vr-selected-file">
 
               <div className="vr-audio-icon">
@@ -298,16 +381,22 @@ function KnowledgePage() {
 
               <button
                 className="vr-remove"
+
                 onClick={(e) => {
+
                   e.stopPropagation();
+
                   setFile(null);
                   setResult(null);
+                  setError("");
+
                 }}
               >
                 ×
               </button>
 
             </div>
+
           )}
 
         </div>
@@ -316,7 +405,9 @@ function KnowledgePage() {
         <div className="vr-process-card">
 
           <div className="vr-card-header">
+
             <div>
+
               <div className="vr-card-label">
                 PROCESSING PIPELINE
               </div>
@@ -324,12 +415,15 @@ function KnowledgePage() {
               <h3>
                 From voice to knowledge
               </h3>
+
             </div>
 
             <div className="vr-ai-symbol">
               ✦
             </div>
+
           </div>
+
 
           <div className="vr-pipeline">
 
@@ -365,22 +459,29 @@ function KnowledgePage() {
 
           </div>
 
+
           <button
             className="vr-primary-button"
             disabled={!file || loading}
             onClick={uploadFile}
           >
+
             {loading ? (
+
               <>
                 <span className="vr-spinner"></span>
                 Processing knowledge...
               </>
+
             ) : (
+
               <>
                 Process voice knowledge
                 <span>→</span>
               </>
+
             )}
+
           </button>
 
         </div>
@@ -389,14 +490,24 @@ function KnowledgePage() {
 
 
       {error && (
+
         <div className="vr-alert error">
-          <strong>Processing failed</strong>
-          <span>{error}</span>
+
+          <strong>
+            Processing failed
+          </strong>
+
+          <span>
+            {error}
+          </span>
+
         </div>
+
       )}
 
 
       {result && (
+
         <div className="vr-success">
 
           <div className="vr-success-top">
@@ -406,6 +517,7 @@ function KnowledgePage() {
             </div>
 
             <div>
+
               <strong>
                 Knowledge successfully added
               </strong>
@@ -413,9 +525,11 @@ function KnowledgePage() {
               <span>
                 Your voice recording is now searchable.
               </span>
+
             </div>
 
           </div>
+
 
           <div className="vr-metrics">
 
@@ -436,12 +550,16 @@ function KnowledgePage() {
 
             <Metric
               label="Source"
-              value={result.source_name || file?.name}
+              value={
+                result.source_name ||
+                file?.name
+              }
             />
 
           </div>
 
         </div>
+
       )}
 
     </div>
@@ -449,73 +567,130 @@ function KnowledgePage() {
 }
 
 
-/* =========================================================
-   ASSISTANT PAGE
-========================================================= */
+// ============================================================
+// ASSISTANT PAGE
+// ============================================================
 
 function AssistantPage() {
+
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+
+  // ==========================================================
+  // ASK QUESTION
+  // ==========================================================
+
   const askQuestion = async () => {
+
     if (!question.trim()) return;
+
+    if (!API_BASE_URL) {
+
+      setError(
+        "API URL is not configured. Please check VITE_API_BASE_URL."
+      );
+
+      return;
+    }
 
     setLoading(true);
     setError("");
 
     try {
+
+      console.log(
+        "Sending question to:",
+        `${API_BASE_URL}/api/chat`
+      );
+
       const response = await fetch(
         `${API_BASE_URL}/api/chat`,
         {
           method: "POST",
+
           headers: {
             "Content-Type": "application/json",
           },
+
           body: JSON.stringify({
             question: question.trim(),
           }),
         }
       );
 
-      const data = await response.json();
+
+      let data = {};
+
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
+
 
       if (!response.ok) {
+
         throw new Error(
-          data.detail || "Failed to generate answer."
+          data.detail ||
+          "Failed to generate answer."
         );
+
       }
+
 
       setAnswer(
         data.answer ||
-          data.response ||
-          data.message ||
-          "No answer returned."
+        data.response ||
+        data.message ||
+        "No answer returned."
       );
+
     } catch (err) {
+
+      console.error(
+        "Chat error:",
+        err
+      );
+
       setError(
         err.message ||
-          "Unable to connect to the backend."
+        "Unable to connect to the backend."
       );
+
     } finally {
+
       setLoading(false);
+
     }
   };
 
+
+  // ==========================================================
+  // TEXT TO SPEECH
+  // ==========================================================
+
   const speakAnswer = () => {
+
     if (!answer) return;
 
     window.speechSynthesis.cancel();
 
     const speech =
-      new SpeechSynthesisUtterance(answer);
+      new SpeechSynthesisUtterance(
+        answer
+      );
 
     speech.rate = 0.95;
     speech.pitch = 1;
 
-    window.speechSynthesis.speak(speech);
+    window.speechSynthesis.speak(
+      speech
+    );
   };
+
 
   return (
     <div className="vr-page">
@@ -523,6 +698,7 @@ function AssistantPage() {
       <section className="vr-intro">
 
         <div>
+
           <div className="vr-section-label">
             AI KNOWLEDGE ASSISTANT
           </div>
@@ -535,6 +711,7 @@ function AssistantPage() {
             Ask questions about the voice recordings
             stored in your vector knowledge base.
           </p>
+
         </div>
 
         <div className="vr-engine-pill">
@@ -554,6 +731,7 @@ function AssistantPage() {
           </div>
 
           <div>
+
             <strong>
               Voice RAG Assistant
             </strong>
@@ -561,6 +739,7 @@ function AssistantPage() {
             <span>
               Grounded in your private knowledge
             </span>
+
           </div>
 
           <div className="vr-chat-online">
@@ -574,6 +753,7 @@ function AssistantPage() {
         <div className="vr-chat-body">
 
           {!answer && !loading && (
+
             <div className="vr-empty-chat">
 
               <div className="vr-empty-orb">
@@ -614,16 +794,20 @@ function AssistantPage() {
               </div>
 
             </div>
+
           )}
 
 
           {loading && (
+
             <div className="vr-loading-answer">
 
               <div className="vr-thinking">
+
                 <span></span>
                 <span></span>
                 <span></span>
+
               </div>
 
               <strong>
@@ -635,10 +819,12 @@ function AssistantPage() {
               </p>
 
             </div>
+
           )}
 
 
           {answer && !loading && (
+
             <div className="vr-answer">
 
               <div className="vr-answer-label">
@@ -652,20 +838,27 @@ function AssistantPage() {
 
               <div className="vr-answer-actions">
 
-                <button onClick={speakAnswer}>
+                <button
+                  onClick={speakAnswer}
+                >
                   🔊 Listen
                 </button>
 
                 <button
                   onClick={() =>
-                    navigator.clipboard.writeText(answer)
+                    navigator.clipboard.writeText(
+                      answer
+                    )
                   }
                 >
                   Copy
                 </button>
 
                 <button
-                  onClick={() => setAnswer("")}
+                  onClick={() => {
+                    setAnswer("");
+                    setError("");
+                  }}
                 >
                   New question
                 </button>
@@ -673,15 +866,18 @@ function AssistantPage() {
               </div>
 
             </div>
+
           )}
 
         </div>
 
 
         {error && (
+
           <div className="vr-alert error">
             {error}
           </div>
+
         )}
 
 
@@ -689,20 +885,31 @@ function AssistantPage() {
 
           <textarea
             value={question}
+
             onChange={(e) =>
-              setQuestion(e.target.value)
+              setQuestion(
+                e.target.value
+              )
             }
+
             onKeyDown={(e) => {
+
               if (
                 e.key === "Enter" &&
                 !e.shiftKey
               ) {
+
                 e.preventDefault();
+
                 askQuestion();
+
               }
+
             }}
+
             placeholder="Ask something about your voice knowledge..."
           />
+
 
           <div className="vr-question-footer">
 
@@ -712,12 +919,19 @@ function AssistantPage() {
 
             <button
               className="vr-send-button"
+
               disabled={
-                !question.trim() || loading
+                !question.trim() ||
+                loading
               }
+
               onClick={askQuestion}
             >
-              {loading ? "..." : "Ask AI →"}
+
+              {loading
+                ? "..."
+                : "Ask AI →"}
+
             </button>
 
           </div>
@@ -731,16 +945,18 @@ function AssistantPage() {
 }
 
 
-/* =========================================================
-   COMPONENTS
-========================================================= */
+// ============================================================
+// PIPELINE COMPONENT
+// ============================================================
 
 function PipelineStep({
   number,
   title,
   description,
 }) {
+
   return (
+
     <div className="vr-pipeline-step">
 
       <div className="vr-pipeline-number">
@@ -748,50 +964,94 @@ function PipelineStep({
       </div>
 
       <div>
-        <strong>{title}</strong>
-        <span>{description}</span>
+
+        <strong>
+          {title}
+        </strong>
+
+        <span>
+          {description}
+        </span>
+
       </div>
 
     </div>
+
   );
 }
 
 
+// ============================================================
+// PIPELINE LINE
+// ============================================================
+
 function PipelineLine() {
+
   return (
     <div className="vr-pipeline-line">
       ↓
     </div>
   );
+
 }
 
 
-function Metric({ label, value }) {
+// ============================================================
+// METRIC
+// ============================================================
+
+function Metric({
+  label,
+  value,
+}) {
+
   return (
+
     <div className="vr-metric">
 
-      <span>{label}</span>
+      <span>
+        {label}
+      </span>
 
       <strong>
         {value}
       </strong>
 
     </div>
+
   );
+
 }
 
+
+// ============================================================
+// FILE SIZE
+// ============================================================
 
 function formatFileSize(bytes) {
-  if (!bytes) return "0 KB";
 
-  const mb = bytes / (1024 * 1024);
-
-  if (mb >= 1) {
-    return `${mb.toFixed(2)} MB`;
+  if (!bytes) {
+    return "0 KB";
   }
 
-  return `${Math.round(bytes / 1024)} KB`;
+  const mb =
+    bytes / (1024 * 1024);
+
+  if (mb >= 1) {
+
+    return `${mb.toFixed(2)} MB`;
+
+  }
+
+  return `${Math.round(
+    bytes / 1024
+  )} KB`;
+
 }
 
+
+// ============================================================
+// EXPORT
+// ============================================================
 
 export default App;

@@ -1,14 +1,19 @@
 import axios from "axios";
 
+// Production Render backend
+// VITE_API_BASE_URL can override this when configured in Vercel.
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  "http://127.0.0.1:8000";
+  "https://voice-rag-2rq5.onrender.com";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
-// Upload voice/audio knowledge
+// ============================================================
+// UPLOAD VOICE / AUDIO KNOWLEDGE
+// ============================================================
+
 export const ingestVoice = async (audioFile) => {
   const formData = new FormData();
 
@@ -16,18 +21,16 @@ export const ingestVoice = async (audioFile) => {
 
   const response = await api.post(
     "/api/voice/ingest",
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
+    formData
   );
 
   return response.data;
 };
 
-// Ask a question using RAG
+// ============================================================
+// ASK QUESTION USING RAG
+// ============================================================
+
 export const askQuestion = async (question) => {
   const response = await api.post(
     "/api/chat",
